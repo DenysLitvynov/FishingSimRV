@@ -138,6 +138,8 @@ public static class IntroVideoSetup
         fade.shadowCastingMode = ShadowCastingMode.Off;
         fade.enabled = false;
 
+        LightScene(root.transform, cabin.transform, door, sun ? sun.GetComponent<Light>() : null);
+
         director.cam = cam;
         director.cabin = cabin.transform;
         director.door = door;
@@ -162,6 +164,37 @@ public static class IntroVideoSetup
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
         Debug.Log("Intro video scene built. Fishing spot: " + director.fishingSpot);
+    }
+
+    // URP has no automatic exposure like HDRP: without this the cabin interior and the
+    // shaded side of the boat come out almost black.
+    static void LightScene(Transform root, Transform cabin, Transform door, Light sun)
+    {
+        if (sun)
+        {
+            // Sun behind the viewer at the start, so the door, the dock and the boat are lit from the front.
+            Vector3 travel = Quaternion.AngleAxis(-25f, Vector3.up) * cabin.forward;
+            sun.transform.rotation = Quaternion.LookRotation(travel, Vector3.up) * Quaternion.Euler(38f, 0f, 0f);
+            sun.intensity = 1.5f;
+            sun.shadowStrength = 0.7f;
+        }
+        RenderSettings.ambientMode = AmbientMode.Trilight;
+        RenderSettings.ambientSkyColor = new Color(0.62f, 0.68f, 0.78f);
+        RenderSettings.ambientEquatorColor = new Color(0.52f, 0.52f, 0.48f);
+        RenderSettings.ambientGroundColor = new Color(0.3f, 0.28f, 0.24f);
+        RenderSettings.reflectionIntensity = 1f;
+
+        // Warm lamp inside the cabin, centred on the room behind the door.
+        var lampGo = new GameObject("Luz interior cabana");
+        lampGo.transform.SetParent(root, false);
+        Vector3 floor = new Vector3(door.position.x, 0f, door.position.z) + cabin.right * -0.45f + cabin.forward * -2.4f;
+        lampGo.transform.position = new Vector3(floor.x, 14.9f, floor.z);
+        var lamp = lampGo.AddComponent<Light>();
+        lamp.type = LightType.Point;
+        lamp.color = new Color(1f, 0.82f, 0.62f);
+        lamp.intensity = 2.2f;
+        lamp.range = 7f;
+        lamp.shadows = LightShadows.None;
     }
 
     // Marches from the dock into the lake until the far shore, and stops well before it.
