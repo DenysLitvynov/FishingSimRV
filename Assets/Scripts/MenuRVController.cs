@@ -113,8 +113,11 @@ public sealed class MenuRVController : MonoBehaviour
         if (keyboard != null)
         {
             if (keyboard.rKey.wasPressedThisFrame)
-                PlacePanel(instructionsOpen ? instructionsCanvas : videoMode ? controls : menuCanvas,
-                    videoMode ? -0.46f : 0f);
+            {
+                if (instructionsOpen) AlignAuxiliaryPanel(instructionsCanvas, 0f);
+                else if (videoMode) AlignAuxiliaryPanel(controls, -0.46f);
+                else PlacePanel(menuCanvas, 0f);
+            }
             if (keyboard.escapeKey.wasPressedThisFrame)
             {
                 if (instructionsOpen) CloseInstructions();
@@ -178,8 +181,8 @@ public sealed class MenuRVController : MonoBehaviour
         videoMaterial.SetFloat("_Rotation", headCamera.transform.eulerAngles.y);
         RenderSettings.skybox = videoMaterial;
         SetMenuVisible(false);
+        AlignAuxiliaryPanel(controls, -0.46f);
         controls.gameObject.SetActive(true);
-        PlacePanel(controls, -0.46f);
         progressText.text = "Preparando vídeo 360º…";
         pauseLabel.text = "Pausar";
         pauseButton.interactable = false;
@@ -212,8 +215,8 @@ public sealed class MenuRVController : MonoBehaviour
         MenuRVAudio.InstructionsSelected();
         instructionsOpen = true;
         SetMenuVisible(false);
+        AlignAuxiliaryPanel(instructionsCanvas, 0f);
         instructionsCanvas.gameObject.SetActive(true);
-        PlacePanel(instructionsCanvas, 0f);
     }
 
     public void CloseInstructions()
@@ -384,6 +387,17 @@ public sealed class MenuRVController : MonoBehaviour
         //    Quaternion.LookRotation(forward, Vector3.up));
     }
 
+    void AlignAuxiliaryPanel(Canvas panel, float heightOffset)
+    {
+        if (!panel || !menuCanvas) return;
+        // Use the teacher's manually placed menu as the fixed world reference.
+        // Keep independent roots so hiding the menu CanvasGroup does not hide
+        // the video controls or the instructions. Do not move the main menu.
+        var anchor = menuCanvas.transform;
+        panel.transform.SetPositionAndRotation(
+            anchor.position + anchor.up * heightOffset, anchor.rotation);
+    }
+
     void RestoreView()
     {
         RenderSettings.skybox = savedSkybox;
@@ -454,7 +468,7 @@ public sealed class MenuRVController : MonoBehaviour
         instructionsCanvas.worldCamera = headCamera;
         instructionsCanvas.sortingOrder = 10;
         root.GetComponent<RectTransform>().sizeDelta = new Vector2(1280f, 720f);
-        root.transform.localScale = Vector3.one * 0.0015f;
+        root.transform.localScale = menuCanvas.transform.lossyScale;
         root.GetComponent<CanvasScaler>().dynamicPixelsPerUnit = 10f;
         root.GetComponent<TrackedDeviceGraphicRaycaster>().ignoreReversedGraphics = true;
         var illustration = root.AddComponent<Image>();
