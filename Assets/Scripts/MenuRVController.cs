@@ -373,15 +373,15 @@ public sealed class MenuRVController : MonoBehaviour
 
     void PlacePanel(Canvas canvas, float heightOffset)
     {
-        if (!headCamera || !canvas) return;
-        var forward = Vector3.ProjectOnPlane(headCamera.transform.forward, Vector3.up);
-        if (forward.sqrMagnitude < 0.01f)
-            forward = origin ? origin.transform.forward : Vector3.forward;
-        forward.y = 0f;
-        forward.Normalize();
-        canvas.transform.SetPositionAndRotation(
-            headCamera.transform.position + forward * panelDistance + Vector3.up * heightOffset,
-            Quaternion.LookRotation(forward, Vector3.up));
+        //if (!headCamera || !canvas) return;
+        //var forward = Vector3.ProjectOnPlane(headCamera.transform.forward, Vector3.up);
+        //if (forward.sqrMagnitude < 0.01f)
+        //    forward = origin ? origin.transform.forward : Vector3.forward;
+        //forward.y = 0f;
+        //forward.Normalize();
+        //canvas.transform.SetPositionAndRotation(
+        //    headCamera.transform.position + forward * panelDistance + Vector3.up * heightOffset,
+        //    Quaternion.LookRotation(forward, Vector3.up));
     }
 
     void RestoreView()
