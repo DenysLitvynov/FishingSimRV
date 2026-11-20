@@ -121,7 +121,11 @@ public sealed class MenuRVController : MonoBehaviour
             if (keyboard.escapeKey.wasPressedThisFrame)
             {
                 if (instructionsOpen) CloseInstructions();
-                else if (videoMode) ReturnToMenu();
+                else if (videoMode)
+                {
+                    MenuRVAudio.Click();
+                    ReturnToMenu();
+                }
             }
         }
 
@@ -244,7 +248,7 @@ public sealed class MenuRVController : MonoBehaviour
         videoMode = false;
         if (player) player.Stop();
         MenuRVAudio.SetTrailer(false);
-        MenuRVAudio.Back();
+        // The control's onClick already plays the shared click once.
         RestoreView();
         controls.gameObject.SetActive(false);
         ClearVideoTexture();

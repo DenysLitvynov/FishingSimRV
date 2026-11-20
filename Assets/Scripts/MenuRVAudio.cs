@@ -25,8 +25,6 @@ public sealed class MenuRVAudio : MonoBehaviour
         { "SereneLake_Menu_Theme_Animated" };
     static readonly string[] GamePlaylist =
         { "SereneLake_Seleccion_Anzuelos_Limpia", "SereneLake_Anzuelos_Selection_Arcade", "SereneLake_Seleccion_Anzuelos" };
-    static readonly string[] ClickVariants =
-        { "ui_click_water", "SereneLake_Boton_Referencia", "SereneLake_Boton_Chapuzon", "SereneLake_Boton_Pesca" };
     static readonly float[] CueTimes = { 0.6f, 3.2f, 12.6f, 19.7f, 26.18f, 27.4f, 36.6f };
     static readonly string[] CueNames =
     {
@@ -42,7 +40,6 @@ public sealed class MenuRVAudio : MonoBehaviour
     AudioSource effects;
     string[] playlist;
     int musicIndex;
-    int clickIndex;
     int nextCue;
     bool videoActive;
     bool videoPaused;
@@ -191,18 +188,14 @@ public sealed class MenuRVAudio : MonoBehaviour
     public static void Hover()
     {
         var audio = Ensure();
-        // In the reference menu only a completed button click makes a sound.
-        if (!audio.inGame && !audio.videoActive) return;
+        // Menu and video controls keep hover feedback visual; only clicks sound.
+        if (!audio.inGame) return;
         if (Time.unscaledTime < audio.nextHoverTime) return;
         audio.nextHoverTime = Time.unscaledTime + 0.15f;
         audio.Play(audio.ui, "ui_boton_serenelake", 0.22f);
     }
 
-    public static void Click()
-    {
-        var audio = Ensure();
-        audio.Play(audio.ui, ClickVariants[audio.clickIndex++ % ClickVariants.Length], 0.65f);
-    }
+    public static void Click() { MenuButtonClick(); }
 
     // Exact original clip identified in the supplied recording. One sound per
     // selection; source volume 0.70 * scale 0.32 matches its recorded level.
