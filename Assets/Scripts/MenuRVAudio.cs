@@ -17,11 +17,12 @@ public sealed class MenuRVAudio : MonoBehaviour
         "SereneLake_Menu_Theme_Animated", "SereneLake_Menu_Theme",
         "SereneLake_Anzuelos_Selection_Arcade", "SereneLake_Seleccion_Anzuelos_Limpia",
         "SereneLake_Seleccion_Anzuelos", "SereneLake_Boton_Referencia",
-        "SereneLake_Boton_Chapuzon", "SereneLake_Boton_Pesca", "ui_boton_serenelake"
+        "SereneLake_Boton_Chapuzon", "SereneLake_Boton_Pesca", "ui_boton_serenelake",
+        "ui_click_menu_original"
     };
 
     static readonly string[] MenuPlaylist =
-        { "SereneLake_Menu_Theme_Animated", "SereneLake_Menu_Theme" };
+        { "SereneLake_Menu_Theme_Animated" };
     static readonly string[] GamePlaylist =
         { "SereneLake_Seleccion_Anzuelos_Limpia", "SereneLake_Anzuelos_Selection_Arcade", "SereneLake_Seleccion_Anzuelos" };
     static readonly string[] ClickVariants =
@@ -140,6 +141,9 @@ public sealed class MenuRVAudio : MonoBehaviour
         playlist = scene == "Menu" ? MenuPlaylist : inGame ? GamePlaylist : null;
         musicIndex = 0;
         music.Stop();
+        // Keep the first menu song repeating at its original speed.
+        music.loop = scene == "Menu";
+        music.pitch = 1f;
         ambient.volume = 0.16f;
         if (playlist == null) { ambient.Stop(); return; }
         if (ambient.clip && !ambient.isPlaying) ambient.Play();
@@ -180,14 +184,15 @@ public sealed class MenuRVAudio : MonoBehaviour
 
     public static void MenuArrived()
     {
-        var audio = Ensure();
-        audio.Play(audio.ui, "ui_open_water_whoosh", 0.65f);
-        audio.Play(audio.ui, "marker_found_chime", 0.45f);
+        // The reference menu has no additional arrival sound.
+        Ensure();
     }
 
     public static void Hover()
     {
         var audio = Ensure();
+        // In the reference menu only a completed button click makes a sound.
+        if (!audio.inGame && !audio.videoActive) return;
         if (Time.unscaledTime < audio.nextHoverTime) return;
         audio.nextHoverTime = Time.unscaledTime + 0.15f;
         audio.Play(audio.ui, "ui_boton_serenelake", 0.22f);
@@ -199,9 +204,12 @@ public sealed class MenuRVAudio : MonoBehaviour
         audio.Play(audio.ui, ClickVariants[audio.clickIndex++ % ClickVariants.Length], 0.65f);
     }
 
-    public static void GameSelected() { var a = Ensure(); Click(); a.Play(a.ui, "minigame_ding_splash", 0.65f); }
-    public static void TrailerSelected() { var a = Ensure(); Click(); a.Play(a.ui, "trailer_reel_splash", 0.65f); }
-    public static void InstructionsSelected() { var a = Ensure(); Click(); a.Play(a.ui, "instructions_open_soft", 0.65f); }
+    // Exact original clip identified in the supplied recording. One sound per
+    // selection; source volume 0.70 * scale 0.32 matches its recorded level.
+    public static void MenuButtonClick() { var a = Ensure(); a.Play(a.ui, "ui_click_menu_original", 0.32f); }
+    public static void GameSelected() { MenuButtonClick(); }
+    public static void TrailerSelected() { MenuButtonClick(); }
+    public static void InstructionsSelected() { MenuButtonClick(); }
     public static void Back() { var a = Ensure(); a.Play(a.ui, "ui_back_bubble", 0.70f); }
 
     public static void SetTrailer(bool active, bool hasEmbeddedAudio = false)
@@ -279,7 +287,7 @@ public sealed class MenuRVAudio : MonoBehaviour
         music.UnPause();
         effects.UnPause();
         audition = null;
-        Debug.Log("Terminada la prueba de los 20 audios de Serene Lake RV.", this);
+        Debug.Log("Terminada la prueba de los " + ClipNames.Length + " audios de Serene Lake RV.", this);
     }
 
     void OnDestroy()

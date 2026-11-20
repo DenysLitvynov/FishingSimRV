@@ -65,7 +65,7 @@ public static class MenuRVChecks
             foreach (string scenePath in new[] { path, "Assets/Scenes/Juego.unity" })
                 if (!EditorBuildSettings.scenes.Any(item => item.enabled && item.path == scenePath))
                     Report("Falta la escena activa de build: " + scenePath, ref errors);
-            if (errors == 0) Debug.Log("Correcto: 3 botones originales, ventana de instrucciones, 20 audios importados y las dos escenas de build.");
+            if (errors == 0) Debug.Log("Correcto: 3 botones originales, ventana de instrucciones, " + MenuRVAudio.ClipNames.Length + " audios importados y las dos escenas de build.");
             else Debug.LogError("La comprobación de Serene Lake RV encontró " + errors + " problema(s).");
         }
         catch (Exception exception) { Debug.LogException(exception); }

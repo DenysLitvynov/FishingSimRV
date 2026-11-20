@@ -223,7 +223,7 @@ public sealed class MenuRVController : MonoBehaviour
     {
         if (!instructionsOpen) return;
         instructionsOpen = false;
-        MenuRVAudio.Back();
+        MenuRVAudio.MenuButtonClick();
         instructionsCanvas.gameObject.SetActive(false);
         SetMenuVisible(true);
         PlacePanel(menuCanvas, 0f);
@@ -480,22 +480,23 @@ public sealed class MenuRVController : MonoBehaviour
         // an opaque cream panel over the old mobile/AR instructions.
         MakePanel(root.transform, "Contenido RV", new Vector2(0f, -20f),
             new Vector2(1040f, 528f), new Color(1f, 0.941f, 0.816f));
-        AddInstructionRow(root.transform, gameButtonArtwork, 160f,
+        AddInstructionRow(root.transform, gameButtonArtwork, 168f,
             "Selecciona Minijuego con el rayo y pulsa el gatillo para entrar en Juego RV.");
-        AddInstructionRow(root.transform, trailerButtonArtwork, -5f,
+        AddInstructionRow(root.transform, trailerButtonArtwork, 40f,
             "Mira alrededor en 360º moviendo la cabeza. Usa Pausar, Reiniciar o Volver al menú.");
-        AddInstructionRow(root.transform, instructionsButtonArtwork, -165f,
+        AddInstructionRow(root.transform, instructionsButtonArtwork, -88f,
             "Apunta con el mando HTC y pulsa y suelta el gatillo. Volver te devuelve a la pantalla de inicio.");
         var lineColor = new Color(0.63f, 0.40f, 0.19f, 0.45f);
-        MakePanel(root.transform, "Separador 1", new Vector2(0f, 78f), new Vector2(940f, 2f), lineColor);
-        MakePanel(root.transform, "Separador 2", new Vector2(0f, -86f), new Vector2(940f, 2f), lineColor);
+        MakePanel(root.transform, "Separador 1", new Vector2(0f, 104f), new Vector2(940f, 2f), lineColor);
+        MakePanel(root.transform, "Separador 2", new Vector2(0f, -24f), new Vector2(940f, 2f), lineColor);
 
         var back = new GameObject("Volver al menú", typeof(RectTransform), typeof(Image), typeof(Button));
         back.layer = UILayer;
         var rect = back.GetComponent<RectTransform>();
         rect.SetParent(root.transform, false);
-        rect.anchoredPosition = new Vector2(0f, -307f);
-        rect.sizeDelta = new Vector2(340f, 110f);
+        // Leave a clear footer below the last row, inside the illustrated frame.
+        rect.anchoredPosition = new Vector2(0f, -222f);
+        rect.sizeDelta = new Vector2(396f, 132f);
         var image = back.GetComponent<Image>();
         image.sprite = backButtonArtwork;
         image.preserveAspect = true;
@@ -521,7 +522,7 @@ public sealed class MenuRVController : MonoBehaviour
         image.sprite = icon;
         image.preserveAspect = true;
         var label = MakeText(parent, "Explicación", text, new Vector2(188f, y),
-            new Vector2(540f, 128f), 29f);
+            new Vector2(540f, 112f), 29f);
         label.alignment = TextAlignmentOptions.Left;
         label.color = new Color(0.035f, 0.16f, 0.22f);
     }
