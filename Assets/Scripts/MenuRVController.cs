@@ -60,7 +60,6 @@ public sealed class MenuRVController : MonoBehaviour
     bool loadingGame;
     bool videoFinished;
     bool instructionsOpen;
-    bool videoSeekPending;
     float prepareDeadline;
     float nextProgressUpdate;
 
@@ -130,7 +129,7 @@ public sealed class MenuRVController : MonoBehaviour
         }
 
         if (!videoMode || !player) return;
-        if (player.isPrepared && !videoSeekPending)
+        if (player.isPrepared)
             MenuRVAudio.TickVideo(player.time, player.isPlaying);
         if (!player.isPrepared && Time.unscaledTime > prepareDeadline)
         {
@@ -161,8 +160,6 @@ public sealed class MenuRVController : MonoBehaviour
         EnsurePlayer();
         MenuRVAudio.TrailerSelected();
         MenuRVAudio.SetTrailer(true, introClip.audioTrackCount > 0);
-        videoSeekPending = false;
-        videoFinished = false;
         savedSkybox = RenderSettings.skybox;
         savedClearFlags = headCamera.clearFlags;
         savedCullingMask = headCamera.cullingMask;
@@ -187,13 +184,7 @@ public sealed class MenuRVController : MonoBehaviour
         SetMenuVisible(false);
         AlignAuxiliaryPanel(controls, -0.46f);
         controls.gameObject.SetActive(true);
-        progressText.text = "Preparando vídeo 360º…";
-        pauseLabel.text = "Pausar";
-        pauseButton.interactable = false;
-        restartButton.interactable = false;
-        prepareDeadline = Time.unscaledTime + 30f;
-        nextProgressUpdate = 0f;
-        player.Prepare();
+        PrepareVideo("Preparando vídeo 360º…");
     }
 
     public void OpenGame()
@@ -278,12 +269,23 @@ public sealed class MenuRVController : MonoBehaviour
     public void RestartVideo()
     {
         if (!videoMode || !player || !player.isPrepared) return;
+        // Restart from a stopped decoder rather than depend on a seek callback.
+        player.Stop();
+        ClearVideoTexture();
+        PrepareVideo("Reiniciando vídeo 360º…");
+    }
+
+    void PrepareVideo(string status)
+    {
         videoFinished = false;
-        videoSeekPending = true;
         MenuRVAudio.PauseVideoEffects(true);
-        player.time = 0;
-        player.Play();
+        progressText.text = status;
         pauseLabel.text = "Pausar";
+        pauseButton.interactable = false;
+        restartButton.interactable = false;
+        prepareDeadline = Time.unscaledTime + 30f;
+        nextProgressUpdate = 0f;
+        player.Prepare();
     }
 
     void EnsurePlayer()
@@ -330,26 +332,17 @@ public sealed class MenuRVController : MonoBehaviour
         player.prepareCompleted += OnVideoPrepared;
         player.loopPointReached += OnVideoFinished;
         player.errorReceived += OnVideoError;
-        player.seekCompleted += OnVideoSeekCompleted;
     }
 
     void OnVideoPrepared(VideoPlayer source)
     {
-        if (!videoMode) return;
+        if (!videoMode || source != player || !source.isPrepared) return;
+        videoFinished = false;
         pauseButton.interactable = true;
         restartButton.interactable = true;
-        videoSeekPending = false;
         MenuRVAudio.SyncVideoTime(0);
         MenuRVAudio.PauseVideoEffects(false);
         source.Play();
-    }
-
-    void OnVideoSeekCompleted(VideoPlayer source)
-    {
-        if (!videoMode) return;
-        videoSeekPending = false;
-        MenuRVAudio.SyncVideoTime(source.time);
-        MenuRVAudio.PauseVideoEffects(false);
     }
 
     void OnVideoFinished(VideoPlayer source)
@@ -361,7 +354,9 @@ public sealed class MenuRVController : MonoBehaviour
 
     void OnVideoError(VideoPlayer source, string message)
     {
-        if (videoMode) FailVideo("No se pudo reproducir el vídeo. Revisa la consola.");
+        // Ignore decoder errors from a playback already cancelled by the user.
+        if (!videoMode || source != player) return;
+        FailVideo("No se pudo reproducir el vídeo. Revisa la consola.");
         Debug.LogError("Intro360: " + message, this);
     }
 
@@ -599,7 +594,6 @@ public sealed class MenuRVController : MonoBehaviour
             player.prepareCompleted -= OnVideoPrepared;
             player.loopPointReached -= OnVideoFinished;
             player.errorReceived -= OnVideoError;
-            player.seekCompleted -= OnVideoSeekCompleted;
             player.Stop();
         }
         if (videoMode) RestoreView();

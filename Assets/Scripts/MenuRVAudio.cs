@@ -122,15 +122,21 @@ public sealed class MenuRVAudio : MonoBehaviour
             ConfigureScene(scene.name);
     }
 
+    void StopAudition()
+    {
+        if (audition == null && !auditioning) return;
+        if (audition != null) StopCoroutine(audition);
+        audition = null;
+        auditioning = false;
+        ui.Stop();
+        ambient.UnPause();
+        music.UnPause();
+        effects.UnPause();
+    }
+
     void ConfigureScene(string scene)
     {
-        if (audition != null)
-        {
-            StopCoroutine(audition);
-            audition = null;
-            auditioning = false;
-            ui.Stop();
-        }
+        StopAudition();
         videoActive = false;
         videoPaused = false;
         effects.Stop();
@@ -199,7 +205,7 @@ public sealed class MenuRVAudio : MonoBehaviour
 
     // Exact original clip identified in the supplied recording. One sound per
     // selection; source volume 0.70 * scale 0.32 matches its recorded level.
-    public static void MenuButtonClick() { var a = Ensure(); a.Play(a.ui, "ui_click_menu_original", 0.32f); }
+    public static void MenuButtonClick() { var a = Ensure(); a.StopAudition(); a.Play(a.ui, "ui_click_menu_original", 0.32f); }
     public static void GameSelected() { MenuButtonClick(); }
     public static void TrailerSelected() { MenuButtonClick(); }
     public static void InstructionsSelected() { MenuButtonClick(); }
@@ -208,6 +214,7 @@ public sealed class MenuRVAudio : MonoBehaviour
     public static void SetTrailer(bool active, bool hasEmbeddedAudio = false)
     {
         var audio = Ensure();
+        audio.StopAudition();
         audio.videoActive = active;
         audio.videoPaused = false;
         audio.effects.Stop();
